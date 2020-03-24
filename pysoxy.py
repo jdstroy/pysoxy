@@ -9,9 +9,10 @@ import socket
 import select
 from struct import pack, unpack
 # System
-import traceback
-from threading import Thread, activeCount
-from signal import signal, SIGINT, SIGTERM
+#import traceback
+#from threading import Thread, activeCount
+import _thread as thread 
+#from signal import signal, SIGINT, SIGTERM
 from time import sleep
 import sys
 
@@ -22,7 +23,7 @@ MAX_THREADS = 200
 BUFSIZE = 2048
 TIMEOUT_SOCKET = 5
 LOCAL_ADDR = '0.0.0.0'
-LOCAL_PORT = 9050
+LOCAL_PORT = 1080
 # Parameter to bind a socket to a device, using SO_BINDTODEVICE
 # Only root can set this option
 # If the name is an empty string or None, the interface is chosen when
@@ -68,10 +69,11 @@ class ExitStatus:
 def error(msg="", err=None):
     """ Print exception stack trace python """
     if msg:
-        traceback.print_exc()
+        #traceback.print_exc()
         print("{} - Code: {}, Message: {}".format(msg, str(err[0]), err[1]))
     else:
-        traceback.print_exc()
+        pass
+        #traceback.print_exc()
 
 
 def proxy_loop(socket_src, socket_dst):
@@ -293,12 +295,12 @@ def main():
     """ Main function """
     new_socket = create_socket()
     bind_port(new_socket)
-    signal(SIGINT, exit_handler)
-    signal(SIGTERM, exit_handler)
+#    signal(SIGINT, exit_handler)
+#    signal(SIGTERM, exit_handler)
     while not EXIT.get_status():
-        if activeCount() > MAX_THREADS:
-            sleep(3)
-            continue
+#        if activeCount() > MAX_THREADS:
+#            sleep(3)
+#            continue
         try:
             wrapper, _ = new_socket.accept()
             wrapper.setblocking(1)
@@ -310,7 +312,7 @@ def main():
         except TypeError:
             error()
             sys.exit(0)
-        recv_thread = Thread(target=connection, args=(wrapper, ))
+        recv_thread = Thread(connection, (wrapper, ))
         recv_thread.start()
     new_socket.close()
 
