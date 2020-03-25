@@ -95,9 +95,10 @@ def proxy_loop(socket_src, socket_dst):
                     socket_src.send(data)
                 else:
                     socket_dst.send(data)
-        except socket.error as err:
-            error("Loop failed", err)
-            return
+        except OSError as err:
+            if err.args[0] == uerrno:
+              error("Loop failed", err)
+              raise
 
 
 def connect_to_dst(dst_addr, dst_port):
@@ -116,7 +117,7 @@ def connect_to_dst(dst_addr, dst_port):
     try:
         sock.connect((dst_addr, dst_port))
         return sock
-    except socket.error as err:
+    except OSError as err:
         error("Failed to connect to DST", err)
         return 0
 
@@ -128,10 +129,10 @@ def request_client(wrapper):
     # +----+-----+-------+------+----------+----------+
     try:
         s5_request = wrapper.recv(BUFSIZE)
-    except ConnectionResetError:
+    except ConnectionResetError as err:
         if wrapper != 0:
             wrapper.close()
-        error()
+        error("Connection reset", err)
         return False
     # Check VER, CMD and RSV
     if (
@@ -181,7 +182,7 @@ def request(wrapper):
     reply = VER + rep + b'\x00' + ATYP_IPV4 + bnd
     try:
         wrapper.sendall(reply)
-    except socket.error:
+    except OSError as err:
         if wrapper != 0:
             wrapper.close()
         return
@@ -239,8 +240,8 @@ def subnegotiation(wrapper):
     reply = VER + method
     try:
         wrapper.sendall(reply)
-    except socket.error:
-        error()
+    except OSError as err:
+        error("subnegotiation error:", err)
         return False
     return True
 
